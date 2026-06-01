@@ -232,8 +232,8 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
             <div class="sf"><div class="sf-label">State</div><div class="sf-val" id="s-state">—</div></div>
           </div>
           <div class="sticker-row">
-            <div class="sf"><div class="sf-label">Rego expires</div><div class="sf-val" id="s-rego">—</div></div>
-            <div class="sf"><div class="sf-label">Licence expires</div><div class="sf-val" id="s-lic">—</div></div>
+            <div class="sf"><div class="sf-label">Rego Expiry</div><div class="sf-val" id="s-rego">—</div></div>
+            <div class="sf"><div class="sf-label">Licence Expiry</div><div class="sf-val" id="s-lic">—</div></div>
           </div>
         </div>
         <div class="sticker-foot"><span>regomate.com</span><span id="s-order">—</span></div>
@@ -255,7 +255,10 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
         <div class="fg"><label>Last name</label><input type="text" id="p-last" placeholder="Smith"></div>
         <div class="fg"><label>Mobile</label><input type="tel" id="p-mobile" placeholder="04XX XXX XXX"></div>
         <div class="fg"><label>Email</label><input type="email" id="p-email" disabled style="opacity:.5"></div>
-        <div class="fg full"><label>Postal address</label><input type="text" id="p-address" placeholder="123 Main St, BRIBIE ISLAND QLD 4507"></div>
+        <div class="fg"><label>Unit / Street number</label><input type="text" id="p-street-no" placeholder="e.g. 2/38 or 38"></div>
+        <div class="fg"><label>Street name</label><input type="text" id="p-street-name" placeholder="e.g. Port Drive"></div>
+        <div class="fg"><label>Suburb</label><input type="text" id="p-suburb" placeholder="e.g. Airlie Beach"></div>
+        <div class="fg" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><label>State</label><select id="p-addr-state"><option value="">State</option><option>QLD</option><option>NSW</option><option>VIC</option><option>SA</option><option>WA</option><option>TAS</option><option>ACT</option><option>NT</option></select></div><div><label>Postcode</label><input type="text" id="p-postcode" placeholder="4000" maxlength="4" inputmode="numeric"></div></div>
       </div>
       <div class="form-actions">
         <button class="btn-save" onclick="savePersonal()">Save changes</button>
@@ -279,14 +282,19 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
             <option>SA</option><option>WA</option><option>TAS</option><option>ACT</option><option>NT</option>
           </select>
         </div>
-        <div class="fg"><label>Rego expiry</label><input type="month" id="v-rego"></div>
-        <div class="fg"><label>Licence expiry</label><input type="month" id="v-lic"></div>
-        <div class="fg"><label>Vehicle type</label>
-          <select id="v-type">
-            <option>Car</option><option>Motorcycle</option><option>Truck</option><option>Trailer</option>
-          </select>
+        <div class="fg full"><label>Rego expiry (day &amp; month)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <select id="v-rego-day"></select>
+            <select id="v-rego-month"></select>
+          </div>
         </div>
-        <div class="fg"><label>Make / model</label><input type="text" id="v-make" placeholder="e.g. Toyota Camry"></div>
+        <div class="fg full"><label>Licence expiry (day, month &amp; year)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <select id="v-lic-day"></select>
+            <select id="v-lic-month"></select>
+            <select id="v-lic-year"></select>
+          </div>
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn-save" onclick="saveVehicle()">Save changes</button>
@@ -363,6 +371,7 @@ let accountData = null;
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = '/login.html'; return; }
   currentUser = session.user;
+  initDropdowns();
   await loadAccount(session.access_token);
   document.getElementById('loading').style.display = 'none';
 })();
@@ -379,6 +388,33 @@ async function loadAccount(token) {
     console.error(e);
     document.getElementById('loading').textContent = 'Could not load account. Please refresh.';
   }
+}
+
+// ── Dropdown helpers ─────────────────────────────────────────────────────────
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildDayOptions() {
+  let o = '<option value="">Day</option>';
+  for (let d = 1; d <= 31; d++) { const v = String(d).padStart(2,'0'); o += `<option value="${v}">${d}</option>`; }
+  return o;
+}
+function buildMonthOptions() {
+  return '<option value="">Month</option>' + MONTH_NAMES.map((n,i) => `<option value="${String(i+1).padStart(2,'0')}">${n}</option>`).join('');
+}
+function buildYearOptions() {
+  const y = new Date().getFullYear();
+  let o = '<option value="">Year</option>';
+  for (let i = y; i <= y+10; i++) o += `<option value="${i}">${i}</option>`;
+  return o;
+}
+function initDropdowns() {
+  ['v-rego-day','v-lic-day'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = buildDayOptions(); });
+  ['v-rego-month','v-lic-month'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = buildMonthOptions(); });
+  const yEl = document.getElementById('v-lic-year'); if(yEl) yEl.innerHTML = buildYearOptions();
+}
+function setDropdown(id, val) {
+  const el = document.getElementById(id); if(!el) return;
+  [...el.options].forEach(o => o.selected = (o.value === val));
 }
 
 function fmtMonth(val) {
@@ -427,7 +463,7 @@ function populateUI(d) {
 
   // Sticker
   document.getElementById('s-plate').textContent = v.plate || '—';
-  document.getElementById('s-owner').textContent = fullName;
+  document.getElementById('s-owner').textContent = firstName || fullName;
   document.getElementById('s-state').textContent = v.state || '—';
   document.getElementById('s-rego').textContent  = fmtMonth(regoStr);
   document.getElementById('s-lic').textContent   = fmtMonth(licStr);
@@ -438,15 +474,20 @@ function populateUI(d) {
   document.getElementById('p-last').value    = d.last_name  || '';
   document.getElementById('p-mobile').value  = d.mobile     || '';
   document.getElementById('p-email').value   = currentUser.email;
-  document.getElementById('p-address').value = d.address1   || '';
+  document.getElementById('p-street-no').value   = d.street_no   || '';
+  document.getElementById('p-street-name').value = d.street_name || '';
+  document.getElementById('p-suburb').value      = d.suburb      || '';
+  document.getElementById('p-addr-state').value  = d.addr_state  || '';
+  document.getElementById('p-postcode').value    = d.postcode    || '';
 
   // Vehicle form
   document.getElementById('v-plate').value = v.plate || '';
   document.getElementById('v-state').value = v.state || '';
-  document.getElementById('v-rego').value  = v.rego_year && v.rego_month ? v.rego_year + '-' + String(v.rego_month).padStart(2,'0') : '';
-  document.getElementById('v-lic').value   = v.lic_year  && v.lic_month  ? v.lic_year  + '-' + String(v.lic_month).padStart(2,'0')  : '';
-  document.getElementById('v-type').value  = v.vehicle_type || 'Car';
-  document.getElementById('v-make').value  = v.make_model   || '';
+  setDropdown('v-rego-day',   String(v.rego_day   || '').padStart(2,'0'));
+  setDropdown('v-rego-month', String(v.rego_month || '').padStart(2,'0'));
+  setDropdown('v-lic-day',    String(v.lic_day    || '').padStart(2,'0'));
+  setDropdown('v-lic-month',  String(v.lic_month  || '').padStart(2,'0'));
+  setDropdown('v-lic-year',   String(v.lic_year   || ''));
 
   // SMS toggles
   document.getElementById('sms-rego').checked      = d.sms_rego      !== false;
@@ -476,7 +517,11 @@ async function savePersonal() {
         first_name: document.getElementById('p-first').value,
         last_name:  document.getElementById('p-last').value,
         mobile:     document.getElementById('p-mobile').value,
-        address1:   document.getElementById('p-address').value,
+        street_no:   document.getElementById('p-street-no').value,
+        street_name: document.getElementById('p-street-name').value,
+        suburb:      document.getElementById('p-suburb').value,
+        addr_state:  document.getElementById('p-addr-state').value,
+        postcode:    document.getElementById('p-postcode').value,
       })
     });
     if (!res.ok) throw new Error((await res.json()).error || 'Save failed');
@@ -494,23 +539,18 @@ async function saveVehicle() {
   btn.disabled = true; btn.textContent = 'Saving…';
   hideAlerts('vehicle');
   try {
-    const regoVal = document.getElementById('v-rego').value;
-    const licVal  = document.getElementById('v-lic').value;
-    const [ry, rm] = regoVal ? regoVal.split('-') : [];
-    const [ly, lm] = licVal  ? licVal.split('-')  : [];
     const { data: { session } } = await sb.auth.getSession();
     const res = await fetch(BACKEND + '/account/vehicle', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body: JSON.stringify({
-        plate:        document.getElementById('v-plate').value.toUpperCase(),
-        state:        document.getElementById('v-state').value,
-        rego_month:   rm ? parseInt(rm) : null,
-        rego_year:    ry ? parseInt(ry) : null,
-        lic_month:    lm ? parseInt(lm) : null,
-        lic_year:     ly ? parseInt(ly) : null,
-        vehicle_type: document.getElementById('v-type').value,
-        make_model:   document.getElementById('v-make').value,
+        plate:      document.getElementById('v-plate').value.toUpperCase(),
+        state:      document.getElementById('v-state').value,
+        rego_day:   parseInt(document.getElementById('v-rego-day').value)   || null,
+        rego_month: parseInt(document.getElementById('v-rego-month').value) || null,
+        lic_day:    parseInt(document.getElementById('v-lic-day').value)    || null,
+        lic_month:  parseInt(document.getElementById('v-lic-month').value)  || null,
+        lic_year:   parseInt(document.getElementById('v-lic-year').value)   || null,
       })
     });
     if (!res.ok) throw new Error((await res.json()).error || 'Save failed');
