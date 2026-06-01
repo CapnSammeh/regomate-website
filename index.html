@@ -104,8 +104,9 @@
     /* ── Step tabs ── */
     .step-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.1); }
     .step-tab  { flex: 1; padding: 12px 6px; text-align: center; font-size: .8rem;
-                 color: var(--grey); cursor: default; border-bottom: 2px solid transparent;
+                 color: var(--grey); cursor: pointer; border-bottom: 2px solid transparent;
                  transition: all .2s; }
+    .step-tab:hover { color: var(--light); }
     .step-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 
     /* ── Form panels ── */
@@ -226,27 +227,29 @@
     /* ── Sticker visual ── */
     .sticker-wrap { display: flex; justify-content: center; }
     .sticker {
-      background: #fff; border-radius: 10px; width: 240px;
+      background: #fff; border-radius: 10px; width: 280px;
       overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.4);
       font-family: 'Arial Black', Arial, sans-serif;
     }
     .sticker-head {
-      background: #111; color: #fff; padding: 8px 12px;
+      background: #111; color: #fff; padding: 10px 14px;
       display: flex; justify-content: space-between; align-items: center;
     }
-    .sticker-head .brand { font-size: .75rem; font-weight: 900; letter-spacing: 2px; color: #f5a623; }
-    .sticker-head .plate { font-size: .85rem; font-weight: 900; letter-spacing: 1px; }
-    .sticker-body { padding: 10px 12px 12px; }
+    .sticker-head .brand { font-size: .85rem; font-weight: 900; letter-spacing: 2px; color: #fff; }
+    .sticker-head .plate { background: #fff; color: #111; font-size: .9rem; font-weight: 900;
+                           letter-spacing: 1px; padding: 3px 10px; border-radius: 4px; }
+    .sticker-body { padding: 12px 14px 10px; }
     .sticker-body .row { display: flex; gap: 12px; margin-bottom: 10px; }
     .sticker-body .field { flex: 1; }
-    .sticker-body .field-lbl { font-size: .58rem; text-transform: uppercase;
-                                letter-spacing: 1px; color: #555; }
-    .sticker-body .field-val { font-size: .85rem; font-weight: 900; color: #111;
-                                line-height: 1.1; }
+    .sticker-body .field-lbl { font-size: .55rem; text-transform: uppercase;
+                                letter-spacing: 1.5px; color: #888; font-family: Arial, sans-serif; }
+    .sticker-body .field-val { font-size: 1.05rem; font-weight: 900; color: #111;
+                                line-height: 1.2; font-family: 'Arial Black', Arial, sans-serif; }
+    .sticker-body .field-val.large { font-size: 1.1rem; }
     .sticker-foot {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 12px; border-top: 1px solid #eee;
-      font-size: .65rem; color: #888;
+      padding: 6px 14px 10px;
+      font-size: .7rem; color: #888; font-family: Arial, sans-serif;
     }
 
     /* ── Pricing ── */
@@ -395,10 +398,10 @@
 
     <!-- Step tabs -->
     <div class="step-tabs">
-      <div class="step-tab active" id="stab-1">1. Personal</div>
-      <div class="step-tab" id="stab-2">2. Vehicle</div>
-      <div class="step-tab" id="stab-3">3. Add extras</div>
-      <div class="step-tab" id="stab-4">4. Payment</div>
+      <div class="step-tab active" id="stab-1" onclick="goStep(1)">1. Personal</div>
+      <div class="step-tab" id="stab-2" onclick="goStep(2)">2. Rego &amp; Licence</div>
+      <div class="step-tab" id="stab-3" onclick="goStep(3)">3. Add extras</div>
+      <div class="step-tab" id="stab-4" onclick="goStep(4)">4. Payment</div>
     </div>
 
     <!-- ── Panel 1: Personal ── -->
@@ -452,17 +455,6 @@
           </div>
         </div>
       </div>
-      <div class="form-group">
-        <label>Licence expiry</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <select id="licExpiryMonth">
-            <option value="">Month</option>
-          </select>
-          <select id="licExpiryYear">
-            <option value="">Year</option>
-          </select>
-        </div>
-      </div>
       <button class="btn-next" onclick="goStep(2)">Next: Vehicle details →</button>
     </div>
 
@@ -484,21 +476,32 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Rego expiry</label>
-        <input type="month" id="regoExpiry">
+        <label>Rego expiry (day &amp; month)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <select id="regoExpiryDay">
+            <option value="">Day</option>
+          </select>
+          <select id="regoExpiryMonth">
+            <option value="">Month</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
-        <label>Vehicle type</label>
-        <select id="vehicleType">
-          <option>Car</option><option>Motorcycle</option>
-          <option>Truck</option><option>Trailer</option>
-        </select>
+        <label>Licence expiry (day, month &amp; year)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <select id="licExpiryDay">
+            <option value="">Day</option>
+          </select>
+          <select id="licExpiryMonth">
+            <option value="">Month</option>
+          </select>
+          <select id="licExpiryYear">
+            <option value="">Year</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Make / model</label>
-        <input type="text" id="makeModel" placeholder="e.g. Toyota Camry">
-      </div>
-      <button class="btn-next" onclick="goStep(3)">Next: Add extras →</button>
+      <button class="btn-next" onclick="goStep(3)">Next: Add extra sticker &amp; reminders →</button>
+      <button class="btn-next" style="margin-top:10px;" onclick="clearExtrasAndPay()">Skip — no extra stickers, go to payment</button>
     </div>
 
     <!-- ── Panel 3: Extras ── -->
@@ -506,7 +509,7 @@
       <div class="extras-note">
         <strong>Optional</strong> — add stickers for a partner, friend, or second vehicle.
         Each extra is $9.99 with SMS reminders included.
-        <strong>No extra postage</strong> for up to 10 stickers.
+        <strong>One flat $4.99 postage</strong> covers up to 10 stickers in one order.
       </div>
 
       <div id="extras-list"></div>
@@ -517,12 +520,12 @@
       <div class="order-summary">
         <div class="sum-row"><span class="lbl">Your subscription (Year 1)</span><span id="summary-base">$14.99</span></div>
         <div class="sum-row"><span class="lbl">Extra stickers</span><span id="summary-extras">$0.00</span></div>
-        <div class="sum-row"><span class="lbl">Postage &amp; handling</span><span id="summary-postage">Free</span></div>
-        <div class="sum-row total"><span>Total</span><span id="summary-total">$14.99</span></div>
+        <div class="sum-row"><span class="lbl">Postage &amp; handling</span><span id="summary-postage">$4.99</span></div>
+        <div class="sum-row total"><span>Total</span><span id="summary-total">$19.98</span></div>
       </div>
 
       <button class="btn-next" onclick="goStep(4)">Next: Payment →</button>
-      <button class="btn-skip" onclick="goStep(4)">Skip — no extra stickers</button>
+      <button class="btn-skip" onclick="clearExtrasAndPay()">Skip — no extra stickers</button>
     </div>
 
     <!-- ── Panel 4: Payment ── -->
@@ -537,14 +540,14 @@
           <span class="lbl"><span class="pay-extras-count"></span></span>
           <span class="pay-extras-amount"></span>
         </div>
-        <div class="sum-row"><span class="lbl">Postage &amp; handling</span><span>Free</span></div>
-        <div class="sum-row total"><span>Total</span><span id="pay-summary-total">$14.99</span></div>
+        <div class="sum-row"><span class="lbl">Postage &amp; handling</span><span>$4.99</span></div>
+        <div class="sum-row total"><span>Total</span><span id="pay-summary-total">$19.98</span></div>
       </div>
 
       <div id="pay-error"></div>
 
       <button class="btn-pay" id="pay-btn" onclick="handlePayment()">
-        Pay $14.99 — get my sticker →
+        Pay $19.98 — get my sticker →
       </button>
 
       <div class="pay-secure">Secured by Stripe · Annual billing · Cancel anytime</div>
@@ -651,27 +654,27 @@
           <div class="row">
             <div class="field">
               <div class="field-lbl">Owner</div>
-              <div class="field-val">John Smith</div>
+              <div class="field-val large">John</div>
             </div>
             <div class="field">
               <div class="field-lbl">State</div>
-              <div class="field-val">QLD</div>
+              <div class="field-val large">QLD</div>
             </div>
           </div>
           <div class="row">
             <div class="field">
-              <div class="field-lbl">Rego expires</div>
-              <div class="field-val">Jun 2026</div>
+              <div class="field-lbl">Rego Expiry</div>
+              <div class="field-val large">18 JUNE</div>
             </div>
             <div class="field">
-              <div class="field-lbl">Licence expires</div>
-              <div class="field-val">Nov 2027</div>
+              <div class="field-lbl">Licence Expiry</div>
+              <div class="field-val large">18 JUNE 2029</div>
             </div>
           </div>
         </div>
         <div class="sticker-foot">
           <span>regomate.com</span>
-          <span>Next renewal Jun 2026</span>
+          <span>RM-00001</span>
         </div>
       </div>
     </div>
@@ -720,32 +723,46 @@
     <div>
       <div class="section-label">Multiple vehicles &amp; family</div>
       <div class="section-title">Got a partner, friend, or second vehicle?</div>
-      <p class="section-sub">Order extra stickers at signup or anytime from your account. Each extra sticker is just <strong>$9.99</strong> and includes its own SMS reminders — and we post everything together so there's <strong>no extra postage</strong> for up to 10 stickers in one order.</p>
+      <p class="section-sub">Order extra stickers at signup or anytime from your account. Each extra sticker is just <strong>$9.99</strong> and includes its own SMS reminders — and we post everything together with a single flat <strong>$4.99 postage</strong> for up to 10 stickers in one order.</p>
       <div class="pricing-example">
         <div class="ex-row"><span class="el">Your subscription (Year 1)</span><span>$14.99</span></div>
         <div class="ex-row"><span class="el">Partner's sticker + SMS</span><span>$9.99</span></div>
         <div class="ex-row"><span class="el">Second vehicle sticker + SMS</span><span>$9.99</span></div>
-        <div class="ex-row"><span class="el">Postage &amp; handling</span><span>Free</span></div>
-        <div class="ex-row"><span>Total — 3 stickers, 3 sets of SMS</span><span>$34.97</span></div>
+        <div class="ex-row"><span class="el">Postage &amp; handling</span><span>$4.99</span></div>
+        <div class="ex-row"><span>Total — 3 stickers, 3 sets of SMS</span><span>$39.96</span></div>
       </div>
     </div>
     <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
       <div class="sticker">
-        <div class="sticker-head"><span class="brand">REGOMATE</span><span class="plate">GHT 441</span></div>
+        <div class="sticker-head">
+          <span class="brand">REGOMATE</span>
+          <span class="plate">GHT 441</span>
+        </div>
         <div class="sticker-body">
           <div class="row">
-            <div class="field"><div class="field-lbl">Owner</div><div class="field-val">Vehicle 3</div></div>
-            <div class="field"><div class="field-lbl">State</div><div class="field-val">QLD</div></div>
+            <div class="field"><div class="field-lbl">Owner</div><div class="field-val large">Sarah</div></div>
+            <div class="field"><div class="field-lbl">State</div><div class="field-val large">QLD</div></div>
+          </div>
+          <div class="row">
+            <div class="field"><div class="field-lbl">Rego Expiry</div><div class="field-val large">12 MARCH</div></div>
+            <div class="field"><div class="field-lbl">Licence Expiry</div><div class="field-val large">05 AUG 2028</div></div>
           </div>
         </div>
         <div class="sticker-foot"><span>regomate.com</span><span>RM-00003</span></div>
       </div>
       <div class="sticker">
-        <div class="sticker-head"><span class="brand">REGOMATE</span><span class="plate">XYZ 789</span></div>
+        <div class="sticker-head">
+          <span class="brand">REGOMATE</span>
+          <span class="plate">XYZ 789</span>
+        </div>
         <div class="sticker-body">
           <div class="row">
-            <div class="field"><div class="field-lbl">Owner</div><div class="field-val">Partner</div></div>
-            <div class="field"><div class="field-lbl">State</div><div class="field-val">QLD</div></div>
+            <div class="field"><div class="field-lbl">Owner</div><div class="field-val large">Mark</div></div>
+            <div class="field"><div class="field-lbl">State</div><div class="field-val large">QLD</div></div>
+          </div>
+          <div class="row">
+            <div class="field"><div class="field-lbl">Rego Expiry</div><div class="field-val large">30 SEPT</div></div>
+            <div class="field"><div class="field-lbl">Licence Expiry</div><div class="field-val large">22 NOV 2027</div></div>
           </div>
         </div>
         <div class="sticker-foot"><span>regomate.com</span><span>RM-00002</span></div>
@@ -787,9 +804,18 @@
 
 <!-- ── JavaScript ── -->
 <script>
-  // ── Month / Year dropdown helpers ────────────────────────────────────────
+  // ── Month / Year / Day dropdown helpers ──────────────────────────────────
   const MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function buildDayOptions(selected) {
+    let opts = '<option value="">Day</option>';
+    for (let d = 1; d <= 31; d++) {
+      const val = String(d).padStart(2,'0');
+      opts += `<option value="${val}"${selected===val?' selected':''}>${d}</option>`;
+    }
+    return opts;
+  }
 
   function buildMonthOptions(selectedMonth) {
     return '<option value="">Month</option>' +
@@ -808,24 +834,35 @@
     return opts;
   }
 
-  function populateDateDropdowns(monthId, yearId) {
+  function populateDayMonthYear(dayId, monthId, yearId) {
+    const dEl = document.getElementById(dayId);
     const mEl = document.getElementById(monthId);
     const yEl = document.getElementById(yearId);
+    if (dEl) dEl.innerHTML = buildDayOptions();
     if (mEl) mEl.innerHTML = buildMonthOptions();
     if (yEl) yEl.innerHTML = buildYearOptions();
   }
 
-  // Populate licence expiry dropdowns on load
-  populateDateDropdowns('licExpiryMonth', 'licExpiryYear');
+  function populateDayMonth(dayId, monthId) {
+    const dEl = document.getElementById(dayId);
+    const mEl = document.getElementById(monthId);
+    if (dEl) dEl.innerHTML = buildDayOptions();
+    if (mEl) mEl.innerHTML = buildMonthOptions();
+  }
+
+  // Populate on load
+  populateDayMonthYear('licExpiryDay', 'licExpiryMonth', 'licExpiryYear');
+  populateDayMonth('regoExpiryDay', 'regoExpiryMonth');
 
   const BACKEND_URL = 'https://regomate-backend-production.up.railway.app';
 
   // ── Order state ──────────────────────────────────────────────────────────
   const order = { plan: 'starter', extras: [], basePrice: 14.99, extraPrice: 9.99 };
+  const POSTAGE = 4.99;
   let extraCounter = 0;
 
   function getTotal() {
-    return (order.basePrice + order.extras.length * order.extraPrice).toFixed(2);
+    return (order.basePrice + order.extras.length * order.extraPrice + POSTAGE).toFixed(2);
   }
 
   // ── Step navigation ──────────────────────────────────────────────────────
@@ -905,15 +942,16 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Rego expiry</label>
+          <label>Rego expiry (day &amp; month)</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <select onchange="updateExtra('${e.id}','regoExpiryDay',this.value)">${buildDayOptions()}</select>
             <select onchange="updateExtra('${e.id}','regoExpiryMonth',this.value)">${buildMonthOptions()}</select>
-            <select onchange="updateExtra('${e.id}','regoExpiryYear',this.value)">${buildYearOptions()}</select>
           </div>
         </div>
         <div class="form-group">
-          <label>Licence expiry</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label>Licence expiry (day, month &amp; year)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <select onchange="updateExtra('${e.id}','licExpiryDay',this.value)">${buildDayOptions()}</select>
             <select onchange="updateExtra('${e.id}','licExpiryMonth',this.value)">${buildMonthOptions()}</select>
             <select onchange="updateExtra('${e.id}','licExpiryYear',this.value)">${buildYearOptions()}</select>
           </div>
@@ -936,9 +974,11 @@
     // Extras tab
     const sb = document.getElementById('summary-base');
     const se = document.getElementById('summary-extras');
+    const sp = document.getElementById('summary-postage');
     const st = document.getElementById('summary-total');
     if (sb) sb.textContent = '$' + order.basePrice.toFixed(2);
     if (se) se.textContent = extrasCount > 0 ? '$' + extrasTotal : '$0.00';
+    if (sp) sp.textContent = '$' + POSTAGE.toFixed(2);
     if (st) st.textContent = '$' + grand;
 
     // Payment tab
@@ -961,6 +1001,14 @@
     if (btn) btn.textContent = 'Pay $' + grand + ' — get my sticker →';
   }
 
+  function clearExtrasAndPay() {
+    order.extras = [];
+    extraCounter = 0;
+    renderExtras();
+    updateOrderSummary();
+    goStep(4);
+  }
+
   // ── Payment ───────────────────────────────────────────────────────────────
   function collectForm() {
     const streetNo   = (document.getElementById('addrStreetNo')   ||{}).value||'';
@@ -970,9 +1018,14 @@
     const postcode   = (document.getElementById('addrPostcode')   ||{}).value||'';
     const address    = [streetNo, streetName, suburb, addrState, postcode].filter(Boolean).join(', ');
 
+    const licDay   = (document.getElementById('licExpiryDay')  ||{}).value||'';
     const licMonth = (document.getElementById('licExpiryMonth')||{}).value||'';
     const licYear  = (document.getElementById('licExpiryYear') ||{}).value||'';
-    const licExpiry = (licMonth && licYear) ? licYear + '-' + licMonth : '';
+    const licExpiry = [licDay, licMonth, licYear].filter(Boolean).join('/');
+
+    const regoDay   = (document.getElementById('regoExpiryDay')  ||{}).value||'';
+    const regoMonth = (document.getElementById('regoExpiryMonth')||{}).value||'';
+    const regoExpiry = [regoDay, regoMonth].filter(Boolean).join('/');
 
     return {
       firstName:   (document.getElementById('firstName')  ||{}).value||'',
@@ -987,10 +1040,8 @@
       address,
       plate:       (document.getElementById('plate')      ||{}).value||'',
       state:       (document.getElementById('state')      ||{}).value||'',
-      regoExpiry:  (document.getElementById('regoExpiry') ||{}).value||'',
+      regoExpiry,
       licExpiry,
-      vehicleType: (document.getElementById('vehicleType')||{}).value||'',
-      makeModel:   (document.getElementById('makeModel')  ||{}).value||'',
     };
   }
 
@@ -1005,7 +1056,7 @@
       errEl.textContent = 'Please complete all personal and address details first.'; return;
     }
     if (!d.plate || !d.state || !d.regoExpiry) {
-      errEl.textContent = 'Please complete your vehicle details first.'; return;
+      errEl.textContent = 'Please complete your vehicle details (plate, state, rego expiry).'; return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) {
       errEl.textContent = 'Please enter a valid email address.'; return;
