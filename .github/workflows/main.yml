@@ -1,0 +1,2 @@
+- name: Sync-Fork-action
+  uses: XueMoMo/Sync-Fork-action@v1.0.6
