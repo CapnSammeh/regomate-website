@@ -462,7 +462,7 @@
       <button class="btn-next" onclick="goStep(2)">Next: Rego &amp; Licence →</button>
     </div>
 
-    <!-- ── Panel 2: Vehicle ── -->
+    <!-- ── Panel 2: Rego & Licence ── -->
     <div class="form-panel" id="panel-2">
       <div class="form-row">
         <div class="form-group">
@@ -480,7 +480,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Rego expiry (day &amp; month)</label>
+        <label>Annual rego renewal date <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— the date your full year rego is due</span></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <select id="regoExpiryDay">
             <option value="">Day</option>
@@ -488,6 +488,19 @@
           <select id="regoExpiryMonth">
             <option value="">Month</option>
           </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Rego period</label>
+        <select id="regoPeriod">
+          <option value="12">12 months — renews once a year</option>
+          <option value="6">6 months — renews twice a year</option>
+          <option value="3">3 months — renews four times a year</option>
+        </select>
+        <div style="background:rgba(245,166,35,.08);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;padding:10px 12px;margin-top:8px;font-size:.8rem;color:var(--grey);line-height:1.5;">
+          <strong style="color:var(--gold);">How this works:</strong> Your sticker shows your annual renewal date.
+          We'll send you SMS reminders before <em>each</em> renewal period so you never miss an interim payment.
+          You can update your rego period anytime from your account if it changes.
         </div>
       </div>
       <div class="form-group">
@@ -511,25 +524,30 @@
     <!-- ── Panel 3: Extras ── -->
     <div class="form-panel" id="panel-3">
       <div class="extras-note">
-        <strong>Optional</strong> — add stickers for a partner, friend, or second vehicle.
-        Each extra is $9.99 with SMS reminders included.
-        <strong>One flat $4.99 postage</strong> covers up to 10 stickers in one order.
+        <strong>Optional</strong> — add stickers for a partner, friend, or second vehicle (up to 8 vehicles total).
+        Each extra is just <strong>$7.99</strong> with SMS reminders included — saving you <strong>$12.00</strong> vs signing up separately later.
+        <strong>One flat $4.99 postage</strong> covers everything in one order.
+      </div>
+
+      <div style="background:rgba(46,204,113,.08);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:10px 12px;margin-bottom:14px;font-size:.82rem;color:var(--grey);line-height:1.5;">
+        <strong style="color:var(--green);">💰 Signup saving:</strong> Adding extra vehicles now costs <strong style="color:var(--white);">$7.99 each</strong> (sticker + SMS).
+        If you sign up separately later it's $14.99 + $4.99 P&amp;H = $19.98. <strong style="color:var(--white);">You save $12.00 per vehicle</strong> by adding them today.
       </div>
 
       <div id="extras-list"></div>
 
-      <button id="add-extra-btn" onclick="addExtra()">+ Add another sticker — $9.99</button>
+      <button id="add-extra-btn" onclick="addExtra()">+ Add another vehicle — $7.99 <span style="font-size:.75rem;opacity:.7;">(save $12.00)</span></button>
 
       <!-- Live order summary -->
       <div class="order-summary">
         <div class="sum-row"><span class="lbl">Your subscription (Year 1)</span><span id="summary-base">$14.99</span></div>
-        <div class="sum-row"><span class="lbl">Extra stickers</span><span id="summary-extras">$0.00</span></div>
+        <div class="sum-row"><span class="lbl">Extra vehicles</span><span id="summary-extras">$0.00</span></div>
         <div class="sum-row"><span class="lbl">Postage &amp; handling</span><span id="summary-postage">$4.99</span></div>
         <div class="sum-row total"><span>Total</span><span id="summary-total">$19.98</span></div>
       </div>
 
       <button class="btn-next" onclick="goStep(4)">Next: Payment →</button>
-      <button class="btn-skip" onclick="clearExtrasAndPay()">Skip — no extra stickers</button>
+      <button class="btn-skip" onclick="clearExtrasAndPay()">Skip — no extra vehicles</button>
     </div>
 
     <!-- ── Panel 4: Payment ── -->
@@ -690,33 +708,65 @@
 <section id="pricing" style="max-width:1200px;margin:0 auto;padding:80px 48px;">
   <div class="section-label">Pricing</div>
   <div class="section-title">Simple, honest pricing</div>
-  <p class="gst-note">All prices include GST</p>
+  <p class="gst-note">All prices include GST · Maximum 8 vehicles per account</p>
   <div class="pricing-grid">
     <div class="price-card featured">
       <span class="feat-badge">Most popular — first year</span>
-      <h4>Starter</h4>
+      <h4>Starter — Year 1</h4>
       <div class="price-val">$14.99</div>
-      <div class="price-sub">first year, then $9.99/yr</div>
+      <div class="price-sub">+ $4.99 postage &amp; handling · then $9.99/yr</div>
       <ul>
         <li>Physical sticker posted to your door</li>
-        <li>SMS reminders at 6w, 4w, 2w + daily final week</li>
-        <li>Both rego &amp; licence expiry tracked</li>
+        <li>SMS reminders — 6w, 4w, 2w + daily final week</li>
+        <li>Rego &amp; licence expiry both tracked</li>
+        <li>3, 6 or 12 month rego periods supported</li>
         <li>Reminders pause once renewed, reset next year</li>
         <li>Auto-renews at $9.99/yr from year two</li>
       </ul>
     </div>
     <div class="price-card">
-      <h4>Renewal / ongoing</h4>
+      <h4>Annual renewal — Year 2+</h4>
       <div class="price-val">$9.99</div>
-      <div class="price-sub">per year (from year two onwards)</div>
+      <div class="price-sub">per year, per vehicle (SMS only)</div>
       <ul>
         <li>All SMS reminders included</li>
         <li>Rego &amp; licence both tracked</li>
+        <li>3, 6 or 12 month rego periods supported</li>
         <li>Reminders pause once renewed, reset next year</li>
-        <li>Replacement sticker available on request</li>
+        <li>Replacement sticker $9.99 (P&amp;H included)</li>
         <li>Cancel anytime</li>
       </ul>
     </div>
+    <div class="price-card">
+      <span class="feat-badge" style="background:var(--green);color:#fff;">Best value at signup</span>
+      <h4>Extra vehicle — Year 1</h4>
+      <div class="price-val" style="color:var(--green);">$7.99</div>
+      <div class="price-sub">per extra vehicle added at signup · no extra postage</div>
+      <ul>
+        <li>Physical sticker included</li>
+        <li>Full SMS reminder sequence included</li>
+        <li>Rego &amp; licence both tracked</li>
+        <li>3, 6 or 12 month rego periods supported</li>
+        <li>All stickers posted in one shipment — no extra P&amp;H</li>
+        <li style="color:var(--green);font-weight:600;">Save $12.00 vs signing up separately later</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <h4>Extra vehicle — Year 2+</h4>
+      <div class="price-val">$4.99</div>
+      <div class="price-sub">per year, per extra vehicle (SMS only)</div>
+      <ul>
+        <li>All SMS reminders included</li>
+        <li>Rego &amp; licence both tracked</li>
+        <li>3, 6 or 12 month rego periods supported</li>
+        <li>Reminders pause once renewed, reset next year</li>
+        <li>Replacement sticker $9.99 (P&amp;H included)</li>
+        <li>Cancel anytime</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:20px;background:rgba(245,166,35,.08);border-radius:10px;padding:16px 20px;font-size:.85rem;color:var(--grey);border-left:3px solid var(--gold);">
+    <strong style="color:var(--gold);">Licence renewal sticker:</strong> When your licence is renewed, we'll automatically send you a new sticker — you just pay the $4.99 postage &amp; handling. This is managed through your subscription, no action needed.
   </div>
 </section>
 </div>
@@ -727,13 +777,19 @@
     <div>
       <div class="section-label">Multiple vehicles &amp; family</div>
       <div class="section-title">Got a partner, friend, or second vehicle?</div>
-      <p class="section-sub">Order extra stickers at signup or anytime from your account. Each extra sticker is just <strong>$9.99</strong> and includes its own SMS reminders — and we post everything together with a single flat <strong>$4.99 postage</strong> for up to 10 stickers in one order.</p>
+      <p class="section-sub">Add extra vehicles at signup for just <strong>$7.99 each</strong> — sticker and full SMS reminders included. All stickers are posted together with one flat <strong>$4.99 postage fee</strong>. Up to 8 vehicles per account.</p>
+      <div style="background:rgba(46,204,113,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;font-size:.85rem;color:var(--grey);">
+        <strong style="color:var(--green);">💰 Signup saving:</strong> Adding extra vehicles at signup saves you <strong style="color:var(--white);">$12.00 per vehicle</strong> compared to signing up separately later ($19.98 each).
+      </div>
       <div class="pricing-example">
-        <div class="ex-row"><span class="el">Your subscription (Year 1)</span><span>$14.99</span></div>
-        <div class="ex-row"><span class="el">Partner's sticker + SMS</span><span>$9.99</span></div>
-        <div class="ex-row"><span class="el">Second vehicle sticker + SMS</span><span>$9.99</span></div>
-        <div class="ex-row"><span class="el">Postage &amp; handling</span><span>$4.99</span></div>
-        <div class="ex-row"><span>Total — 3 stickers, 3 sets of SMS</span><span>$39.96</span></div>
+        <div class="ex-row"><span class="el">Your subscription — Year 1 (sticker + SMS)</span><span>$14.99</span></div>
+        <div class="ex-row"><span class="el">Partner's vehicle — sticker + SMS</span><span>$7.99</span></div>
+        <div class="ex-row"><span class="el">Second vehicle — sticker + SMS</span><span>$7.99</span></div>
+        <div class="ex-row"><span class="el">Postage &amp; handling (covers all 3)</span><span>$4.99</span></div>
+        <div class="ex-row"><span>Total — 3 stickers, 3 sets of SMS reminders</span><span>$35.96</span></div>
+        <div class="ex-row" style="font-size:.82rem;color:var(--green);font-weight:600;border-top:none;padding-top:4px;">
+          <span>You save vs signing up separately</span><span>$24.00</span>
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
@@ -861,7 +917,7 @@
   const BACKEND_URL = 'https://regomate-backend-production.up.railway.app';
 
   // ── Order state ──────────────────────────────────────────────────────────
-  const order = { plan: 'starter', extras: [], basePrice: 14.99, extraPrice: 9.99 };
+  const order = { plan: 'starter', extras: [], basePrice: 14.99, extraPrice: 7.99 };
   const POSTAGE = 4.99;
   let extraCounter = 0;
 
@@ -900,7 +956,7 @@
     extraCounter++;
     const id = 'extra-' + extraCounter;
     order.extras.push({ id, plate: '', state: '', regoExpiry: '', licExpiry: '',
-                        firstName: '', mobile: '' });
+                        firstName: '', stickerName: '', mobile: '', regoPeriod: 12 });
     renderExtras();
     updateOrderSummary();
   }
@@ -916,7 +972,7 @@
     list.innerHTML = order.extras.map((e, i) => `
       <div class="extra-item" id="ei-${e.id}">
         <div class="extra-header">
-          <span class="extra-title">Extra sticker ${i + 1} — $9.99</span>
+          <span class="extra-title">Extra vehicle ${i + 1} — $7.99 <span style="color:var(--green);font-size:.78rem;font-weight:400;">(save $12.00)</span></span>
           <button class="btn-remove" onclick="removeExtra('${e.id}')">✕ Remove</button>
         </div>
         <div class="form-row">
@@ -925,9 +981,13 @@
             <input type="text" placeholder="Jane" oninput="updateExtra('${e.id}','firstName',this.value)">
           </div>
           <div class="form-group">
-            <label>Mobile</label>
+            <label>Mobile (for SMS alerts)</label>
             <input type="tel" placeholder="04XX XXX XXX" oninput="updateExtra('${e.id}','mobile',this.value)">
           </div>
+        </div>
+        <div class="form-group">
+          <label>Name on sticker <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— this is what will appear on the sticker</span></label>
+          <input type="text" placeholder="e.g. Jane, JD, Mum" oninput="updateExtra('${e.id}','stickerName',this.value)">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -946,11 +1006,19 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Rego expiry (day &amp; month)</label>
+          <label>Annual rego renewal date <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— the date the full year rego is due</span></label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <select onchange="updateExtra('${e.id}','regoExpiryDay',this.value)">${buildDayOptions()}</select>
             <select onchange="updateExtra('${e.id}','regoExpiryMonth',this.value)">${buildMonthOptions()}</select>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Rego period</label>
+          <select onchange="updateExtra('${e.id}','regoPeriod',parseInt(this.value))">
+            <option value="12">12 months — renews once a year</option>
+            <option value="6">6 months — renews twice a year</option>
+            <option value="3">3 months — renews four times a year</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Licence expiry (day, month &amp; year)</label>
@@ -995,7 +1063,7 @@
       if (extrasCount > 0) {
         pe.style.display = '';
         pe.querySelector('.pay-extras-count').textContent =
-          extrasCount + ' extra sticker' + (extrasCount > 1 ? 's' : '');
+          extrasCount + ' extra vehicle' + (extrasCount > 1 ? 's' : '');
         pe.querySelector('.pay-extras-amount').textContent = '$' + extrasTotal;
       } else {
         pe.style.display = 'none';
@@ -1045,6 +1113,7 @@
       address,
       plate:       (document.getElementById('plate')      ||{}).value||'',
       state:       (document.getElementById('state')      ||{}).value||'',
+      regoPeriod:  parseInt((document.getElementById('regoPeriod')||{}).value||'12'),
       regoExpiry,
       licExpiry,
     };
