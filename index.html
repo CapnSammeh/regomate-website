@@ -417,6 +417,10 @@
         </div>
       </div>
       <div class="form-group">
+        <label>Name on sticker <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— this is what will appear on your sticker</span></label>
+        <input type="text" id="stickerName" placeholder="e.g. John, JD, Mum" autocomplete="off">
+      </div>
+      <div class="form-group">
         <label>Email address</label>
         <input type="email" id="email" placeholder="john@example.com" autocomplete="email">
       </div>
@@ -431,18 +435,18 @@
         </div>
         <div class="form-group">
           <label>Street name</label>
-          <input type="text" id="addrStreetName" placeholder="e.g. Port Drive" autocomplete="off">
+          <input type="text" id="addrStreetName" placeholder="e.g. Port Drive" autocomplete="address-line1">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Suburb</label>
-          <input type="text" id="addrSuburb" placeholder="e.g. Airlie Beach" autocomplete="off">
+          <input type="text" id="addrSuburb" placeholder="e.g. Airlie Beach" autocomplete="address-level2">
         </div>
         <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
             <label>State</label>
-            <select id="addrState">
+            <select id="addrState" autocomplete="address-level1">
               <option value="">State</option>
               <option>QLD</option><option>NSW</option><option>VIC</option>
               <option>SA</option><option>WA</option><option>TAS</option>
@@ -451,11 +455,11 @@
           </div>
           <div>
             <label>Postcode</label>
-            <input type="text" id="addrPostcode" placeholder="4000" maxlength="4" inputmode="numeric">
+            <input type="text" id="addrPostcode" placeholder="4000" maxlength="4" inputmode="numeric" autocomplete="postal-code">
           </div>
         </div>
       </div>
-      <button class="btn-next" onclick="goStep(2)">Next: Vehicle details →</button>
+      <button class="btn-next" onclick="goStep(2)">Next: Rego &amp; Licence →</button>
     </div>
 
     <!-- ── Panel 2: Vehicle ── -->
@@ -1011,12 +1015,12 @@
 
   // ── Payment ───────────────────────────────────────────────────────────────
   function collectForm() {
-    const streetNo   = (document.getElementById('addrStreetNo')   ||{}).value||'';
-    const streetName = (document.getElementById('addrStreetName') ||{}).value||'';
-    const suburb     = (document.getElementById('addrSuburb')     ||{}).value||'';
-    const addrState  = (document.getElementById('addrState')      ||{}).value||'';
-    const postcode   = (document.getElementById('addrPostcode')   ||{}).value||'';
-    const address    = [streetNo, streetName, suburb, addrState, postcode].filter(Boolean).join(', ');
+    const streetNo    = (document.getElementById('addrStreetNo')   ||{}).value||'';
+    const streetName  = (document.getElementById('addrStreetName') ||{}).value||'';
+    const suburb      = (document.getElementById('addrSuburb')     ||{}).value||'';
+    const addrState   = (document.getElementById('addrState')      ||{}).value||'';
+    const postcode    = (document.getElementById('addrPostcode')   ||{}).value||'';
+    const address     = [streetNo, streetName, suburb, addrState, postcode].filter(Boolean).join(', ');
 
     const licDay   = (document.getElementById('licExpiryDay')  ||{}).value||'';
     const licMonth = (document.getElementById('licExpiryMonth')||{}).value||'';
@@ -1030,6 +1034,7 @@
     return {
       firstName:   (document.getElementById('firstName')  ||{}).value||'',
       lastName:    (document.getElementById('lastName')   ||{}).value||'',
+      stickerName: (document.getElementById('stickerName')||{}).value||'',
       email:       (document.getElementById('email')      ||{}).value||'',
       mobile:      (document.getElementById('mobile')     ||{}).value||'',
       addrStreetNo,
