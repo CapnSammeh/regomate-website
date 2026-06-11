@@ -207,6 +207,7 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
     <button class="tab-btn active" onclick="showTab('dashboard',this)">🏠 Dashboard</button>
     <button class="tab-btn" onclick="showTab('personal',this)">👤 Personal</button>
     <button class="tab-btn" onclick="showTab('vehicle',this)">🚗 Vehicle</button>
+    <button class="tab-btn" onclick="showTab('sticker',this)">🏷️ Update your Sticker</button>
     <button class="tab-btn" onclick="showTab('sms',this)">📱 SMS</button>
     <button class="tab-btn" onclick="showTab('security',this)">🔒 Security</button>
   </div>
@@ -316,6 +317,19 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
         <button class="btn-save" onclick="saveVehicle()">Save changes</button>
         <div class="save-msg" id="vehicle-saved">✓ Saved</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Update your Sticker -->
+  <div class="tab-panel" id="tab-sticker">
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Update your Sticker</div></div>
+      <div style="font-size:13px;color:rgba(232,237,245,0.45);line-height:1.6;margin-bottom:1.25rem;">
+        Need a new sticker? Each request below costs <strong style="color:#e8edf5;">$4.99</strong> (postage &amp; handling) charged to your card on file — your sticker and address label will be printed and posted to you.
+      </div>
+      <div class="alert alert-success" id="sticker-success"></div>
+      <div class="alert alert-error" id="sticker-error"></div>
+      <div id="sticker-vehicle-list"></div>
     </div>
   </div>
 
@@ -569,6 +583,223 @@ function populateUI(d) {
   document.getElementById('sms-rego').checked      = d.sms_rego      !== false;
   document.getElementById('sms-lic').checked       = d.sms_licence   !== false;
   document.getElementById('sms-marketing').checked = d.sms_marketing !== false;
+
+  // Update your Sticker tab
+  renderStickerTab(d);
+}
+
+// ── Update your Sticker ──────────────────────────────────────────────────────
+const STICKER_MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtStickerDate(day, month, year) {
+  const m = month ? STICKER_MONTH_NAMES[parseInt(month) - 1] : null;
+  if (!m) return '—';
+  return (day ? day + ' ' : '') + m + (year ? ' ' + year : '');
+}
+
+function renderStickerTab(d) {
+  const list = document.getElementById('sticker-vehicle-list');
+  const vehicles = d.vehicles || [];
+
+  if (vehicles.length === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:rgba(232,237,245,0.4);">No vehicles found on your account.</div>';
+    return;
+  }
+
+  list.innerHTML = vehicles.map(v => {
+    const regoStr = fmtStickerDate(v.rego_day, v.rego_month);
+    const licStr  = fmtStickerDate(v.lic_day, v.lic_month, v.lic_year);
+    const pending = v.sticker_status === 'pending_payment';
+
+    return `
+      <div class="extra-item" id="sticker-vehicle-${v.id}" style="margin-bottom:1rem;">
+        <div class="extra-header">
+          <span class="extra-title">${v.plate || 'Vehicle'} (${v.state || '—'})</span>
+          ${pending ? '<span style="color:#e8a020;font-size:12px;font-weight:700;">⚠ Payment pending</span>' : ''}
+        </div>
+        <div style="font-size:13px;color:rgba(232,237,245,0.6);line-height:1.7;margin-bottom:1rem;">
+          Name on sticker: <strong style="color:#e8edf5;">${v.sticker_name || '—'}</strong><br>
+          Annual rego renewal: <strong style="color:#e8edf5;">${regoStr}</strong> (${v.rego_period || 12}-month period)<br>
+          Licence expiry: <strong style="color:#e8edf5;">${licStr}</strong>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="card-action" onclick="openStickerForm('${v.id}','vehicle_change')">I've changed vehicles</button>
+          <button class="card-action" onclick="openStickerForm('${v.id}','licence_renewal')">Licence renewed</button>
+          <button class="card-action" onclick="openStickerForm('${v.id}','replacement')">Order replacement</button>
+        </div>
+        <div id="sticker-form-${v.id}" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.07);"></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function closeStickerForm(vehicleId) {
+  const form = document.getElementById(`sticker-form-${vehicleId}`);
+  form.style.display = 'none';
+  form.innerHTML = '';
+}
+
+function openStickerForm(vehicleId, reason) {
+  // Close any other open forms first
+  document.querySelectorAll('[id^="sticker-form-"]').forEach(f => {
+    if (f.id !== `sticker-form-${vehicleId}`) { f.style.display = 'none'; f.innerHTML = ''; }
+  });
+
+  const v = (accountData.vehicles || []).find(x => x.id === vehicleId);
+  if (!v) return;
+
+  const form = document.getElementById(`sticker-form-${vehicleId}`);
+  const last4 = accountData.card_last4 || '••••'; // populated if backend provides it
+
+  let fieldsHtml = '';
+
+  if (reason === 'vehicle_change') {
+    fieldsHtml = `
+      <div class="form-grid">
+        <div class="fg"><label>Rego plate</label><input type="text" id="sf-plate-${vehicleId}" value="${v.plate || ''}" style="text-transform:uppercase"></div>
+        <div class="fg"><label>State</label>
+          <select id="sf-state-${vehicleId}">
+            ${['QLD','NSW','VIC','SA','WA','TAS','ACT','NT'].map(s => `<option value="${s}" ${v.state===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg full"><label>Name on sticker</label><input type="text" id="sf-stickername-${vehicleId}" value="${v.sticker_name || ''}" placeholder="e.g. John, JD, Mum"></div>
+        <div class="fg full"><label>Annual rego renewal date (day &amp; month)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <select id="sf-regoday-${vehicleId}">${buildDayOptions()}</select>
+            <select id="sf-regomonth-${vehicleId}">${buildMonthOptions()}</select>
+          </div>
+        </div>
+        <div class="fg full"><label>Rego period</label>
+          <select id="sf-regoperiod-${vehicleId}">
+            <option value="12">12 months</option>
+            <option value="6">6 months</option>
+            <option value="3">3 months</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Licence expiry (day, month &amp; year)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <select id="sf-licday-${vehicleId}">${buildDayOptions()}</select>
+            <select id="sf-licmonth-${vehicleId}">${buildMonthOptions()}</select>
+            <select id="sf-licyear-${vehicleId}">${buildYearOptions()}</select>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (reason === 'licence_renewal') {
+    fieldsHtml = `
+      <div class="fg full"><label>New licence expiry (day, month &amp; year)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <select id="sf-licday-${vehicleId}">${buildDayOptions()}</select>
+          <select id="sf-licmonth-${vehicleId}">${buildMonthOptions()}</select>
+          <select id="sf-licyear-${vehicleId}">${buildYearOptions()}</select>
+        </div>
+      </div>
+    `;
+  } else {
+    fieldsHtml = `<div style="font-size:13px;color:rgba(232,237,245,0.6);margin-bottom:1rem;">We'll reprint your sticker with your current details — no changes needed.</div>`;
+  }
+
+  const reasonLabel = {
+    vehicle_change: "I've changed vehicles",
+    licence_renewal: 'Licence renewed',
+    replacement: 'Order replacement sticker'
+  }[reason];
+
+  form.innerHTML = `
+    <div style="font-weight:700;font-size:14px;margin-bottom:.75rem;">${reasonLabel}</div>
+    ${fieldsHtml}
+    <div style="background:rgba(232,160,32,0.08);border:1px solid rgba(232,160,32,0.2);border-radius:8px;padding:10px 14px;margin:1rem 0;font-size:13px;color:rgba(232,237,245,0.75);">
+      <strong style="color:#e8a020;">$4.99</strong> will be charged to your card on file for postage &amp; handling.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-save" id="sf-confirm-${vehicleId}" onclick="submitStickerUpdate('${vehicleId}','${reason}')">Confirm &amp; pay $4.99</button>
+      <button class="card-action" onclick="closeStickerForm('${vehicleId}')">Cancel</button>
+    </div>
+  `;
+
+  // Pre-fill dropdowns for vehicle_change / licence_renewal
+  if (reason === 'vehicle_change') {
+    setDropdown(`sf-regoday-${vehicleId}`,   String(v.rego_day   || '').padStart(2,'0'));
+    setDropdown(`sf-regomonth-${vehicleId}`, String(v.rego_month || '').padStart(2,'0'));
+    const periodEl = document.getElementById(`sf-regoperiod-${vehicleId}`);
+    if (periodEl) periodEl.value = String(v.rego_period || 12);
+    setDropdown(`sf-licday-${vehicleId}`,    String(v.lic_day    || '').padStart(2,'0'));
+    setDropdown(`sf-licmonth-${vehicleId}`,  String(v.lic_month  || '').padStart(2,'0'));
+    setDropdown(`sf-licyear-${vehicleId}`,   String(v.lic_year   || ''));
+  } else if (reason === 'licence_renewal') {
+    setDropdown(`sf-licday-${vehicleId}`,    String(v.lic_day    || '').padStart(2,'0'));
+    setDropdown(`sf-licmonth-${vehicleId}`,  String(v.lic_month  || '').padStart(2,'0'));
+    setDropdown(`sf-licyear-${vehicleId}`,   String(v.lic_year   || ''));
+  }
+
+  form.style.display = 'block';
+}
+
+async function submitStickerUpdate(vehicleId, reason) {
+  const btn = document.getElementById(`sf-confirm-${vehicleId}`);
+  const successEl = document.getElementById('sticker-success');
+  const errorEl   = document.getElementById('sticker-error');
+  successEl.classList.remove('show');
+  errorEl.classList.remove('show');
+
+  let updates = {};
+  if (reason === 'vehicle_change') {
+    updates = {
+      plate:       document.getElementById(`sf-plate-${vehicleId}`).value,
+      state:       document.getElementById(`sf-state-${vehicleId}`).value,
+      stickerName: document.getElementById(`sf-stickername-${vehicleId}`).value,
+      regoDay:     document.getElementById(`sf-regoday-${vehicleId}`).value,
+      regoMonth:   document.getElementById(`sf-regomonth-${vehicleId}`).value,
+      regoPeriod:  document.getElementById(`sf-regoperiod-${vehicleId}`).value,
+      licDay:      document.getElementById(`sf-licday-${vehicleId}`).value,
+      licMonth:    document.getElementById(`sf-licmonth-${vehicleId}`).value,
+      licYear:     document.getElementById(`sf-licyear-${vehicleId}`).value,
+    };
+  } else if (reason === 'licence_renewal') {
+    updates = {
+      licDay:   document.getElementById(`sf-licday-${vehicleId}`).value,
+      licMonth: document.getElementById(`sf-licmonth-${vehicleId}`).value,
+      licYear:  document.getElementById(`sf-licyear-${vehicleId}`).value,
+    };
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Processing payment…';
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(BACKEND + '/account/sticker-update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ vehicleId, reason, updates })
+    });
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.error || 'Something went wrong');
+
+    if (result.success) {
+      successEl.textContent = '✓ Payment successful! Your new sticker and address label have been sent for printing.';
+      successEl.classList.add('show');
+    } else {
+      errorEl.textContent = result.message || 'Payment could not be processed. Please update your payment method.';
+      errorEl.classList.add('show');
+    }
+
+    closeStickerForm(vehicleId);
+
+    // Refresh account data to reflect updated vehicle details / sticker_status
+    const { data: { session: s2 } } = await sb.auth.getSession();
+    await loadAccount(s2.access_token);
+
+  } catch (e) {
+    errorEl.textContent = e.message || 'Something went wrong. Please try again or contact support@regomate.com';
+    errorEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Confirm & pay $4.99';
+  }
 }
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
