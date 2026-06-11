@@ -252,6 +252,7 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
         </div>
         <div class="sticker-foot"><span>regomate.com</span><span id="s-order">—</span></div>
       </div>
+      <div id="s-vehicle-note" style="font-size:12px;color:rgba(232,237,245,0.4);margin-top:.5rem;"></div>
       <div style="margin-top:1.25rem;">
         <button class="card-action" id="replace-btn" onclick="orderReplacement()" style="font-size:13px;padding:8px 18px;">🔁 Order replacement sticker — $9.99</button>
         <div style="font-size:11px;color:rgba(232,237,245,0.35);margin-top:8px;line-height:1.5;">
@@ -521,6 +522,24 @@ function daysUntil(monthStr) {
   return Math.ceil((exp - new Date()) / 86400000);
 }
 
+// Rego dates are stored as day + month only (no year — renews annually).
+// Find the next occurrence of that date (this year or next) and return
+// the number of days until it.
+function daysUntilAnnualDate(day, month) {
+  const m = month ? parseInt(month) : null;
+  if (!m) return null;
+  const d = day ? parseInt(day) : 1;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const thisYear = today.getFullYear();
+  let target = new Date(thisYear, m - 1, d);
+  if (target < today) target = new Date(thisYear + 1, m - 1, d);
+
+  return Math.round((target - today) / 86400000);
+}
+
 function populateUI(d) {
   const v = d.vehicles?.[0] || {};
   const firstName = d.first_name || '';
@@ -539,10 +558,9 @@ function populateUI(d) {
   document.getElementById('hero-plan').textContent   = d.plan || 'Starter';
 
   // Hero stats
-  document.getElementById('stat-rego').textContent = fmtMonth(v.rego_month ? v.rego_year + '-' + String(v.rego_month).padStart(2,'0') : '');
-  document.getElementById('stat-lic').textContent  = fmtMonth(v.lic_month  ? v.lic_year  + '-' + String(v.lic_month).padStart(2,'0')  : '');
-  const regoStr = v.rego_year ? v.rego_year + '-' + String(v.rego_month||1).padStart(2,'0') : null;
-  const days    = daysUntil(regoStr);
+  document.getElementById('stat-rego').textContent = fmtStickerDate(v.rego_day, v.rego_month);
+  document.getElementById('stat-lic').textContent  = fmtStickerDate(v.lic_day, v.lic_month, v.lic_year);
+  const days = daysUntilAnnualDate(v.rego_day, v.rego_month);
   document.getElementById('stat-days').textContent = days !== null ? days : '—';
 
   // Dashboard stats
@@ -553,11 +571,21 @@ function populateUI(d) {
 
   // Sticker
   document.getElementById('s-plate').textContent = v.plate || '—';
-  document.getElementById('s-owner').textContent = firstName || fullName;
+  document.getElementById('s-owner').textContent = v.sticker_name || firstName || fullName;
   document.getElementById('s-state').textContent = v.state || '—';
-  document.getElementById('s-rego').textContent  = fmtMonth(regoStr);
-  document.getElementById('s-lic').textContent   = fmtMonth(licStr);
+  document.getElementById('s-rego').textContent  = fmtStickerDate(v.rego_day, v.rego_month);
+  document.getElementById('s-lic').textContent   = fmtStickerDate(v.lic_day, v.lic_month, v.lic_year);
   document.getElementById('s-order').textContent = d.id ? 'RM-' + String(d.id).slice(-5).toUpperCase() : '—';
+
+  // If the account has more than one vehicle, show which one the sticker
+  // preview/stats above relate to, and a note to check the other vehicles
+  // in the "Update your Sticker" tab.
+  const vehicleNoteEl = document.getElementById('s-vehicle-note');
+  if (vehicleNoteEl) {
+    vehicleNoteEl.textContent = (d.vehicles || []).length > 1
+      ? `Showing ${v.plate || 'your first vehicle'} — see "Update your Sticker" for all ${d.vehicles.length} vehicles.`
+      : '';
+  }
 
   // Personal form
   document.getElementById('p-first').value   = d.first_name || '';
