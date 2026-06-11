@@ -690,7 +690,7 @@ function openStickerForm(vehicleId, reason) {
             ${['QLD','NSW','VIC','SA','WA','TAS','ACT','NT'].map(s => `<option value="${s}" ${v.state===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-        <div class="fg full"><label>Name on sticker</label><input type="text" id="sf-stickername-${vehicleId}" value="${v.sticker_name || ''}" placeholder="e.g. John, JD, Mum"></div>
+        <div class="fg full"><label>Name on sticker</label><input type="text" id="sf-stickername-${vehicleId}" value="${v.sticker_name || ''}" maxlength="12" placeholder="e.g. John, JD, Mum"></div>
         <div class="fg full"><label>Annual rego renewal date (day &amp; month)</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <select id="sf-regoday-${vehicleId}">${buildDayOptions()}</select>

@@ -418,7 +418,7 @@
       </div>
       <div class="form-group">
         <label>Name on sticker <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— this is what will appear on your sticker</span></label>
-        <input type="text" id="stickerName" placeholder="e.g. John, JD, Mum" autocomplete="off">
+        <input type="text" id="stickerName" placeholder="e.g. John, JD, Mum" maxlength="12" autocomplete="off">
       </div>
       <div class="form-group">
         <label>Email address</label>
@@ -994,7 +994,7 @@
         </div>
         <div class="form-group">
           <label>Name on sticker <span style="color:var(--grey);font-weight:400;font-size:.78rem;">— this is what will appear on the sticker</span></label>
-          <input type="text" placeholder="e.g. Jane, JD, Mum" oninput="updateExtra('${e.id}','stickerName',this.value)">
+          <input type="text" placeholder="e.g. Jane, JD, Mum" maxlength="12" oninput="updateExtra('${e.id}','stickerName',this.value)">
         </div>
         <div class="form-row">
           <div class="form-group">
