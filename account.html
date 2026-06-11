@@ -252,7 +252,10 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
         <div class="sticker-foot"><span>regomate.com</span><span id="s-order">—</span></div>
       </div>
       <div style="margin-top:1.25rem;">
-        <button class="card-action" onclick="orderReplacement()" style="font-size:13px;padding:8px 18px;">🔁 Order replacement sticker — $12.98</button>
+        <button class="card-action" id="replace-btn" onclick="orderReplacement()" style="font-size:13px;padding:8px 18px;">🔁 Order replacement sticker — $9.99</button>
+        <div style="font-size:11px;color:rgba(232,237,245,0.35);margin-top:8px;line-height:1.5;">
+          Includes postage &amp; handling. A new sticker with your current details will be posted to your address on file.
+        </div>
       </div>
     </div>
   </div>
@@ -683,6 +686,10 @@ async function changePassword() {
 
 // ── Replacement sticker ───────────────────────────────────────────────────────
 async function orderReplacement() {
+  const btn = document.getElementById('replace-btn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to checkout…';
   try {
     const { data: { session } } = await sb.auth.getSession();
     const res = await fetch(BACKEND + '/checkout/create-session', {
@@ -693,7 +700,11 @@ async function orderReplacement() {
     const result = await res.json();
     if (!res.ok) throw new Error(result.error);
     window.location.href = result.url;
-  } catch(e) { alert('Could not start checkout: ' + e.message); }
+  } catch(e) {
+    alert('Could not start checkout: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 // ── Logout ────────────────────────────────────────────────────────────────────
