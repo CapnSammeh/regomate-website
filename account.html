@@ -139,6 +139,19 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
 
 <div class="loading-overlay" id="loading">Loading your account…</div>
 
+<!-- Password recovery overlay - shown only when arriving via reset password link -->
+<div class="loading-overlay" id="recovery-overlay" style="display:none;flex-direction:column;gap:1rem;">
+  <div style="background:#111e35;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:2rem;width:100%;max-width:380px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:6px;text-align:center;">Set a new password</div>
+    <div style="font-size:13px;color:rgba(232,237,245,0.45);text-align:center;margin-bottom:1.5rem;line-height:1.5;">Enter a new password for your RegoMate account.</div>
+    <div id="recovery-error" style="background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#f85149;margin-bottom:1rem;display:none;"></div>
+    <div id="recovery-success" style="background:rgba(29,158,117,0.1);border:1px solid rgba(29,158,117,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#1d9e75;margin-bottom:1rem;display:none;"></div>
+    <div class="fg"><label>New password</label><input type="password" id="recovery-pw-new" placeholder="Min 8 characters"></div>
+    <div class="fg" style="margin-top:.75rem;"><label>Confirm new password</label><input type="password" id="recovery-pw-confirm" placeholder="Repeat password"></div>
+    <button class="btn-save" style="width:100%;margin-top:1rem;" onclick="setNewPassword()">Save new password</button>
+  </div>
+</div>
+
 <nav>
   <a class="logo" href="/">
     <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
@@ -367,14 +380,74 @@ let currentUser = null;
 let accountData = null;
 
 // ── Init ─────────────────────────────────────────────────────────────────────
-(async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = '/login.html'; return; }
+let initDone = false;
+
+async function initAccountPage(session) {
+  if (initDone) return;
+  initDone = true;
   currentUser = session.user;
   initDropdowns();
   await loadAccount(session.access_token);
   document.getElementById('loading').style.display = 'none';
-})();
+}
+
+// Listen for auth state changes — handles magic links, password recovery,
+// and session restoration after redirects from Stripe/email links.
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    // User clicked a "reset password" email link — show the set-password form
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('recovery-overlay').style.display = 'flex';
+    return;
+  }
+  if (event === 'SIGNED_IN' && session) {
+    document.getElementById('recovery-overlay').style.display = 'none';
+    await initAccountPage(session);
+  }
+  if (event === 'INITIAL_SESSION') {
+    if (session) {
+      await initAccountPage(session);
+    } else {
+      // Give Supabase a moment to process any auth tokens in the URL
+      // (magic link / recovery / payment redirect) before bouncing to login.
+      setTimeout(async () => {
+        if (initDone) return;
+        const { data: { session: retrySession } } = await sb.auth.getSession();
+        if (retrySession) {
+          await initAccountPage(retrySession);
+        } else if (document.getElementById('recovery-overlay').style.display !== 'flex') {
+          window.location.href = '/login.html';
+        }
+      }, 800);
+    }
+  }
+});
+
+// ── Password recovery ───────────────────────────────────────────────────────
+async function setNewPassword() {
+  const newPw  = document.getElementById('recovery-pw-new').value;
+  const confPw = document.getElementById('recovery-pw-confirm').value;
+  const errEl  = document.getElementById('recovery-error');
+  const okEl   = document.getElementById('recovery-success');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (newPw.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+  if (newPw !== confPw) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+
+  const { error } = await sb.auth.updateUser({ password: newPw });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+
+  okEl.textContent = '✓ Password updated! Loading your account…';
+  okEl.style.display = 'block';
+
+  setTimeout(async () => {
+    document.getElementById('recovery-overlay').style.display = 'none';
+    document.getElementById('loading').style.display = 'flex';
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) await initAccountPage(session);
+  }, 1200);
+}
 
 async function loadAccount(token) {
   try {
