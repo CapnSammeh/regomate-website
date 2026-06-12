@@ -357,6 +357,23 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
   <!-- SECURITY -->
   <div class="tab-panel" id="tab-security">
     <div class="card">
+      <div class="card-hd"><div class="card-title">Payment method</div></div>
+      <div class="alert alert-success" id="pm-success"></div>
+      <div class="alert alert-error" id="pm-error"></div>
+      <div id="pm-current" style="font-size:14px;color:rgba(232,237,245,0.7);margin-bottom:1rem;">Loading…</div>
+      <div id="pm-form" style="display:none;max-width:400px;">
+        <div class="fg">
+          <label>Card details</label>
+          <div id="card-element" style="background:#0f1c2e;border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:12px 14px;"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" id="pm-save-btn" onclick="savePaymentMethod()">Save card</button>
+          <button class="card-action" onclick="closePaymentForm()">Cancel</button>
+        </div>
+      </div>
+      <button class="card-action" id="pm-update-btn" onclick="openPaymentForm()">Update payment method</button>
+    </div>
+    <div class="card">
       <div class="card-hd"><div class="card-title">Change password</div></div>
       <div class="alert alert-success" id="pw-success"></div>
       <div class="alert alert-error" id="pw-error"></div>
@@ -388,11 +405,17 @@ footer{border-top:1px solid rgba(255,255,255,0.07);padding:1.5rem 3rem;display:f
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 const BACKEND = 'https://regomate-backend-production.up.railway.app';
 const SUPABASE_URL = 'https://njchkgyorcwmkvdpzxue.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_4sSK0_NZ12nosdyYVeqlbA_fWD7rPAQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51TW9B1DdLdUO7qfV7nQWkSXSHz2SPmoZ1uvOUkQIUNDw9PqPnFuOwlJiQzQyKzzimvfUZ8Nvfjv7oHIiT205RT1j00DMnlVkor';
+const stripeClient = Stripe(STRIPE_PUBLISHABLE_KEY);
+let stripeElements = null;
+let cardElement = null;
 
 let currentUser = null;
 let accountData = null;
@@ -406,6 +429,7 @@ async function initAccountPage(session) {
   currentUser = session.user;
   initDropdowns();
   await loadAccount(session.access_token);
+  await loadPaymentMethod(session.access_token);
   document.getElementById('loading').style.display = 'none';
 }
 
@@ -990,6 +1014,105 @@ function hideAlerts(prefix) {
     const el = document.getElementById(prefix + '-' + t);
     if (el) el.classList.remove('show');
   });
+}
+
+// ── Payment method ───────────────────────────────────────────────────────────
+async function loadPaymentMethod(token) {
+  const display = document.getElementById('pm-current');
+  try {
+    const res = await fetch(BACKEND + '/account/payment-method', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+
+    if (data.hasCard) {
+      const brand = (data.brand || 'card').charAt(0).toUpperCase() + (data.brand || 'card').slice(1);
+      display.innerHTML = `${brand} ending in <strong style="color:#e8edf5;">${data.last4}</strong>` +
+        (data.expMonth ? ` <span style="color:rgba(232,237,245,0.35);">(expires ${String(data.expMonth).padStart(2,'0')}/${data.expYear})</span>` : '');
+    } else {
+      display.innerHTML = '<span style="color:rgba(232,237,245,0.4);">No payment method on file.</span>';
+    }
+  } catch (e) {
+    display.innerHTML = '<span style="color:rgba(232,237,245,0.4);">Could not load payment method.</span>';
+  }
+}
+
+async function openPaymentForm() {
+  hideAlerts('pm');
+  document.getElementById('pm-form').style.display = 'block';
+  document.getElementById('pm-update-btn').style.display = 'none';
+
+  if (!cardElement) {
+    stripeElements = stripeClient.elements();
+    cardElement = stripeElements.create('card', {
+      style: {
+        base: {
+          color: '#e8edf5',
+          fontSize: '15px',
+          '::placeholder': { color: 'rgba(232,237,245,0.35)' },
+        },
+        invalid: { color: '#e24b4a' },
+      }
+    });
+    cardElement.mount('#card-element');
+  }
+}
+
+function closePaymentForm() {
+  document.getElementById('pm-form').style.display = 'none';
+  document.getElementById('pm-update-btn').style.display = 'inline-block';
+  hideAlerts('pm');
+}
+
+async function savePaymentMethod() {
+  const btn = document.getElementById('pm-save-btn');
+  hideAlerts('pm');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+
+    // 1. Create a SetupIntent on the backend
+    const siRes = await fetch(BACKEND + '/account/setup-intent', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    });
+    const siData = await siRes.json();
+    if (!siRes.ok) throw new Error(siData.error || 'Could not start update');
+
+    // 2. Confirm the card details with Stripe.js (card never touches our server)
+    const { setupIntent, error } = await stripeClient.confirmCardSetup(siData.clientSecret, {
+      payment_method: { card: cardElement }
+    });
+
+    if (error) throw new Error(error.message);
+
+    // 3. Tell the backend to save this as the default payment method
+    const confirmRes = await fetch(BACKEND + '/account/confirm-payment-method', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ paymentMethodId: setupIntent.payment_method })
+    });
+    const confirmData = await confirmRes.json();
+    if (!confirmRes.ok) throw new Error(confirmData.error || 'Could not save card');
+
+    showAlert('pm', 'success', '✓ Payment method updated successfully.');
+    closePaymentForm();
+    await loadPaymentMethod(session.access_token);
+
+    // Reset card element for next time
+    cardElement.clear();
+
+  } catch (e) {
+    showAlert('pm', 'error', e.message || 'Something went wrong. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save card';
+  }
 }
 </script>
 </body>
